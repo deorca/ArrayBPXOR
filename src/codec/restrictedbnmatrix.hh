@@ -38,44 +38,44 @@ private:
     unsigned char * _full_input_values;
 
     int *** _template_matrix;
-	
+
     // Helpers
     void ConstructionTasks();
-	void InitialiseTemplate();
+    void InitialiseTemplate();
     int ArrayContainsValue(int indices[], int number_of_indices, int value);
 
-	// Reconstructors
-    void ReconstructJ1(unsigned char * column1);
+    // Reconstructors
+    void ReconstructJ1(unsigned char * column1, int column_size);
     void ReconstructWithJ2ForJ1(unsigned char * column2);
     void ReconstructWithJ3ForJ1(unsigned char * column3);
     void ReconstructWithJ4ForJ1(unsigned char * column4);
 
-    void ReconstructJ2FirstRound(unsigned char * column2);
+    void ReconstructJ2FirstRound(unsigned char * column2, int column_size);
     void ReconstructWithJ3ForJ2(unsigned char * column3);
     void ReconstructJ2SecondRound(unsigned char * column2);
     void ReconstructWithJ4ForJ2(unsigned char * column4);
     
-    void ReconstructJ3FirstRound(unsigned char * column3);
+    void ReconstructJ3FirstRound(unsigned char * column3, int column_size);
     void ReconstructWithJ4ForJ3FirstRound(unsigned char * column4);
     void ReconstructJ3SecondRound(unsigned char * column3);
     void ReconstructWithJ4ForJ3SecondRound(unsigned char * column4);
     void ReconstructJ3ThirdRound(unsigned char * column3);
 
 public:
-	RestrictedBNMatrix();
+    RestrictedBNMatrix();
     RestrictedBNMatrix(int b, int n);
-	~RestrictedBNMatrix();
+    virtual ~RestrictedBNMatrix();
 
-	// ICodeMatrix
-	int Rows();
-	int Columns();
-	int ColumnsRequired();
+    // ICodeMatrix
+    int Rows();
+    int Columns();
+    int ColumnsRequired();
 
     unsigned char * Key();
     void Initialise(unsigned char key[]);
 
     unsigned char ** CreateShares(unsigned char * secret);
-    unsigned char * ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices);
+    unsigned char * ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices, int share_size);
 };
 
 #endif // RESTRICTEDBNMATRIX_H

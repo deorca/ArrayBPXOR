@@ -22,7 +22,7 @@ public:
 	virtual unsigned char * Key() = 0;
     
 	virtual map<int, vector<unsigned char> > CreateShares(unsigned char * secret, int length, int max_number_of_shares) = 0;
-	virtual unsigned char * ReconstructSecret(unsigned char ** shares, int num_shares, int share_size, int expected_file_size_in_bytes) = 0;
+	virtual unsigned char * ReconstructSecret(map<int, vector<unsigned char> > shares, int share_size, int expected_file_size_in_bytes) = 0;
 };
 
 

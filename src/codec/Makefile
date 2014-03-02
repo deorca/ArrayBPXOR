@@ -1,6 +1,7 @@
 #--------------------------------------------------------------------------
 CC=g++
 CFLAGS=-I./src -I./test -g
+LDFLAGS=-lboost_system -lboost_filesystem
 TEST1=testcases_bnmatrix.cpp
 TEST2=testcases_sharer.cpp
 MAIN=secretsharer.cpp
@@ -13,11 +14,12 @@ EXE=secretsharer
 
 all: cleanest $(EXE) $(TEST1EXE) $(TEST2EXE)
 main: cleanest $(EXE)
-tests: cleanest $(TEST1EXE) $(TEST2EXE)
+#tests: cleanest $(TEST1EXE) $(TEST2EXE)
+tests: cleanest $(TEST2EXE)
 
 
 $(EXE): $(MAIN) $(LIB1) $(LIB2)
-	$(CC) $(CFLAGS) $? -o $@
+	$(CC) $(CFLAGS) $? -o $@ $(LDFLAGS)
 
 $(TEST1EXE): $(TEST1) $(LIB1) $(LIB2)
 	$(CC) $(CFLAGS) $? -o $@
@@ -32,5 +34,5 @@ clean:
 	rm -rf *.dSYM
 
 cleanest: clean
-	rm -f $(EXE)
+	rm -f $(EXE) $(TEST1EXE) $(TEST2EXE)
 

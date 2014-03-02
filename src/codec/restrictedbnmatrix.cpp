@@ -41,9 +41,17 @@ RestrictedBNMatrix::~RestrictedBNMatrix()
 {
     cout << "RestrictedBNMatrix::~RestrictedBNMatrix() called.\n";
 
-    delete _key;
-    delete _full_input_values;
-    delete _template_matrix;
+    delete[] _key;
+    delete[] _full_input_values;
+    for (int j = 0; j <= REQUIRED_COLUMNS; j++)
+    {
+        for (int i = 1; i <= _b; i++)
+	{
+	    delete[] _template_matrix[j][i];
+	}
+	delete[] _template_matrix[j];
+    }
+    delete[] _template_matrix;
 }
 
 // ICodeMatrix
@@ -56,7 +64,8 @@ int RestrictedBNMatrix::Columns()
     return _n;
 }
 int RestrictedBNMatrix::ColumnsRequired()
-{
+{    
+
     return REQUIRED_COLUMNS;
 }
 
@@ -89,11 +98,11 @@ unsigned char ** RestrictedBNMatrix::CreateShares(unsigned char * secret)
         _full_input_values[i] = secret[i] ^ _key[i];
     }
     
-    unsigned char ** return_val = new (nothrow) unsigned char * [REQUIRED_COLUMNS];
+    unsigned char ** return_val = new (nothrow) unsigned char * [REQUIRED_COLUMNS + 1];
     // Assign a value to the first element even though it will never be used
     // Arrays are always zero-based, but we use one-base here to preserve the
     // -protocol
-    return_val[0] = new (nothrow) unsigned char[_b];
+    return_val[0] = new (nothrow) unsigned char[_b + 1];
 
     for (int j = 1; j <= REQUIRED_COLUMNS; j++)
     {
@@ -128,7 +137,7 @@ unsigned char ** RestrictedBNMatrix::CreateShares(unsigned char * secret)
     
     return return_val;
 }
-unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices)
+unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices, int share_size)
 {
     unsigned char *reconstructed_secret = new (nothrow) unsigned char [_b];
     
@@ -139,7 +148,7 @@ unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, i
     
     if (one_index >= 0) // Key = 1 exists
     {
-        ReconstructJ1(shares[indices[one_index]]);
+        ReconstructJ1(shares[one_index], share_size);
         if (two_index >= 0)
         {
             ReconstructWithJ2ForJ1(shares[two_index]);
@@ -155,7 +164,7 @@ unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, i
     }
     else if (two_index >= 0)
     {
-        ReconstructJ2FirstRound(shares[two_index]);
+        ReconstructJ2FirstRound(shares[two_index], share_size);
         if (three_index >= 0)
         {
             ReconstructWithJ3ForJ2(shares[three_index]);
@@ -168,7 +177,7 @@ unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, i
     }
     else if (three_index >= 0)
     {
-        ReconstructJ3FirstRound(shares[three_index]);
+        ReconstructJ3FirstRound(shares[three_index], share_size);
         ReconstructWithJ4ForJ3FirstRound(shares[four_index]);
         ReconstructJ3SecondRound(shares[three_index]);
         ReconstructWithJ4ForJ3SecondRound(shares[four_index]);
@@ -176,7 +185,7 @@ unsigned char * RestrictedBNMatrix::ReconstructSecret(unsigned char ** shares, i
     }
     
     // Reconstruct secret from reconstructed input-values
-    for (int i = 0; i < _b; i++)
+    for (int i = 0; i < share_size; i++)
     {
         reconstructed_secret[i] = _full_input_values[i] ^ _full_input_values[i + _b];
     }
@@ -191,12 +200,13 @@ void RestrictedBNMatrix::InitialiseTemplate()
     // the third should always be = 2 and specifies a value-pair
     // Build each column in turn
     
-    int *** template_matrix = new (nothrow) int ** [REQUIRED_COLUMNS + 1]();
+    //int *** template_matrix = new (nothrow) int ** [REQUIRED_COLUMNS + 1]();
+    _template_matrix = new (nothrow) int ** [REQUIRED_COLUMNS + 1]();
     
-    if (template_matrix == NULL) return;
+    if (_template_matrix == NULL) return;
     
     int ** firstrow = new (nothrow) int * [_b + 1]();
-    template_matrix[0] = firstrow;
+    _template_matrix[0] = firstrow;
     
     // Build each column in turn
     for (int j = 1; j <= REQUIRED_COLUMNS; j++)
@@ -205,7 +215,9 @@ void RestrictedBNMatrix::InitialiseTemplate()
         
         if (row == NULL)
         {
-            delete[] template_matrix;
+	    for (int y=0; y<j; y++)
+		delete[] _template_matrix[y];
+	    delete[] _template_matrix;
             return;
         }
         
@@ -236,8 +248,12 @@ void RestrictedBNMatrix::InitialiseTemplate()
             
             if (left_and_right == NULL)
             {
+		for (int x=1; x<i; x++)
+		    delete[] row[x];
                 delete[] row;
-                delete[] template_matrix;
+		for (int y=0; y<j; y++)
+		    delete[] _template_matrix[y];
+                delete[] _template_matrix;
                 return;
             }
             
@@ -246,18 +262,18 @@ void RestrictedBNMatrix::InitialiseTemplate()
 
             row[i] = left_and_right;
         }
-        template_matrix[j] = row;
+        _template_matrix[j] = row;
     }
     
-    _template_matrix = template_matrix;
+    //_template_matrix = template_matrix;
+    
+    //delete template_matrix;
 }
 int RestrictedBNMatrix::ArrayContainsValue(int indices[], int number_of_indices, int value)
 {
-    int local_value = value - ONE_BASE_OFFSET;
-    
     for (int i = 0; i < number_of_indices; i++)
     {
-        if (indices[i] == local_value)
+        if (indices[i] == value)
         {
             return i;
         }
@@ -269,7 +285,7 @@ int RestrictedBNMatrix::ArrayContainsValue(int indices[], int number_of_indices,
 // Reconstructors
 
 // + BEGIN J1
-void RestrictedBNMatrix::ReconstructJ1(unsigned char * column1)
+void RestrictedBNMatrix::ReconstructJ1(unsigned char * column1, int column_size)
 {
     // Reminder:    Vi  = Vi´ ^ Si
     //              Vi´ = V(i+b)
@@ -285,7 +301,7 @@ void RestrictedBNMatrix::ReconstructJ1(unsigned char * column1)
     v++;
     i++;
     
-    while (i < _b)
+    while (i < column_size)
     {
         // Ragaining V3:    setting v, index v=3 (2 in zero-base)
         //                  referencing column-index i=2 (1 in zero-base)
@@ -336,7 +352,7 @@ void RestrictedBNMatrix::ReconstructWithJ4ForJ1(unsigned char * column4)
 // - END J1
 
 // + BEGIN J2
-void RestrictedBNMatrix::ReconstructJ2FirstRound(unsigned char * column2)
+void RestrictedBNMatrix::ReconstructJ2FirstRound(unsigned char * column2, int column_size)
 {
     // Reminder:    Vi  = Vi´ ^ Si
     //              Vi´ = V(i+b)
@@ -352,7 +368,7 @@ void RestrictedBNMatrix::ReconstructJ2FirstRound(unsigned char * column2)
     v++;
     i++;
     
-    while (i < _b)
+    while (i < column_size)
     {
         // Regaining Vi+2:  setting v, index v=3 (2 in zero-base)
         //                  referencing column-index i=2 (1 in zero-base)
@@ -415,7 +431,7 @@ void RestrictedBNMatrix::ReconstructWithJ4ForJ2(unsigned char * column4)
 // - END J2
 
 // + BEGIN J3
-void RestrictedBNMatrix::ReconstructJ3FirstRound(unsigned char * column3)
+void RestrictedBNMatrix::ReconstructJ3FirstRound(unsigned char * column3, int column_size)
 {
     // Reminder:    Vi  = Vi´ ^ Si
     //              Vi´ = V(i+b)
@@ -431,7 +447,7 @@ void RestrictedBNMatrix::ReconstructJ3FirstRound(unsigned char * column3)
     v++;
     i++;
     
-    while (i < _b)
+    while (i < column_size)
     {
         // Regaining V3:    setting v, index v=3 (2 in zero-base)
         //                  referencing column-index i=2 (1 in zero-base)

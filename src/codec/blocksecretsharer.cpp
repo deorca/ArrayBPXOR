@@ -11,12 +11,17 @@
 #include <stdlib.h>
 #include <iostream>
 #include <time.h>
+#include <string.h>
+#include <unistd.h>
+
 using namespace std;
 
 BlockSecretSharer::BlockSecretSharer()
 {
+    cout << "BlockSecretSharer::BlockSecretSharer() called.\n";
     unsigned char key[B];
 
+    usleep(543123);
     srand ( time(NULL));
     for (int i = 0; i < B; i++)
     {
@@ -27,12 +32,13 @@ BlockSecretSharer::BlockSecretSharer()
 
 BlockSecretSharer::BlockSecretSharer(unsigned char * key)
 {
+    cout << "BlockSecretSharer::BlockSecretSharer(unsigned char *) called.\n";
     Initialise(key);
 }
 BlockSecretSharer::~BlockSecretSharer()
 {
-    //delete _array_bp_xor_matrix;
-    //delete[] _key;
+    cout << "BlockSecretSharer::~BlockSecretSharer() called.\n";
+    delete _array_bp_xor_matrix;
 }
 
 void BlockSecretSharer::Initialise(unsigned char * key)
@@ -106,8 +112,9 @@ map<int, vector<unsigned char> > BlockSecretSharer::CreateShares(unsigned char *
         for (int i = 0; i < total_shares; i++)
         {
             copy(block_shares[i], block_shares[i] + B, array_shares[i] + next_block_index);
+	    delete[] block_shares[i];
         }
-        
+	delete[] block_shares[total_shares];
         delete[] block_shares;
         
         // Set up index for next iteration
@@ -119,58 +126,73 @@ map<int, vector<unsigned char> > BlockSecretSharer::CreateShares(unsigned char *
     for (int i = 0; i < total_shares; i++)
     {
         shares[i+1] = vector<unsigned char>(array_shares[i], array_shares[i] + output_length);
+	delete[] array_shares[i];
     }
-    
     delete[] array_shares;
     
     return shares;
 }
-unsigned char * BlockSecretSharer::ReconstructSecret(unsigned char ** shares, int num_shares, int share_size, int expected_file_size_in_bytes)
+unsigned char * BlockSecretSharer::ReconstructSecret(map<int, vector<unsigned char> > shares, int share_size, int expected_file_size_in_bytes)
 {
-    if (num_shares < 2 || num_shares > N-1)
+    if (shares.size() < 2 || shares.size() > N-1)
         throw "Number of shares from which to reconstruct secret should be at least 2";
     
     // Create & initialise a return-value
     unsigned char * reconstructed_secret = new unsigned char[expected_file_size_in_bytes];
     
     // Loop over shares, taking 'B' bytes at a tinme, reconstructing them, and adding each output to list
+    unsigned char ** big_shares = new unsigned char * [2];
     unsigned char ** small_shares = new unsigned char * [2];
     
-    int indices[] = { 0, 1 };
+    int indices[2];
+    int index = 0;
     
-/*
-    cout << "\n\nRecevied share 1:\n";
-    for (int i = 0; i < share_size; i++)
+    for (int i = 1; i <= 4; i++)
     {
-        cout << "'" << int(shares[0][i]) << "' ";
+        map<int, vector<unsigned char> >::iterator it = shares.find(i);
+	if (it != shares.end())
+	{
+	    indices[index] = i;
+	    index++;
+	    if (index == 2)
+	        break;
+	}
     }
     
-    cout << "\nRecevied share 2:\n";
-    for (int i = 0; i < share_size; i++)
-    {
-        cout << "'" << int(shares[1][i]) << "' ";
-    }
+    big_shares[0] = new unsigned char[shares[indices[0]].size()];
+    big_shares[1] = new unsigned char[shares[indices[1]].size()];
     
-    cout << "\n\n";
-*/
+    memcpy (big_shares[0], shares[indices[0]].data(), shares[indices[0]].size());
+    memcpy (big_shares[1], shares[indices[1]].data(), shares[indices[1]].size());
     
-    unsigned char * next_block_index_first = shares[0];
-    unsigned char * next_block_index_second = shares[1];
+    unsigned char * next_block_index_first = big_shares[0];
+    unsigned char * next_block_index_second = big_shares[1];
     unsigned char * next_block_index_recon = reconstructed_secret;
 
     bool end_reached = false;
     int actual_size = 0;
+    int block_slice = B;
+    int share_slice = B;
     while (!end_reached)
     {
         // Copy blocks from first and second share
         small_shares[0] = next_block_index_first;
         small_shares[1] = next_block_index_second;
         
-        // Reconstruct block from small-shares
-        unsigned char * reconstructed_block = _array_bp_xor_matrix->ReconstructSecret(small_shares, indices, 2);
+	// Get size of next small-share
+	if (next_block_index_first + B > big_shares[0] + share_size)
+	    share_slice = big_shares[0] + share_size - next_block_index_first;
+
+	// Reconstruct block from small-shares
+        unsigned char * reconstructed_block = _array_bp_xor_matrix->ReconstructSecret(small_shares, indices, 2, share_slice);
+	
         // Add reconstructed block to reconstructed secret
-        std::copy(reconstructed_block, reconstructed_block + B, next_block_index_recon);
-        
+	if (actual_size + B > expected_file_size_in_bytes)
+	    block_slice = expected_file_size_in_bytes - actual_size;
+	std::copy(reconstructed_block, reconstructed_block + block_slice, next_block_index_recon);
+	
+	delete[] reconstructed_block;
+	
         next_block_index_first += B;
         next_block_index_second += B;
         next_block_index_recon += B;
@@ -179,7 +201,14 @@ unsigned char * BlockSecretSharer::ReconstructSecret(unsigned char ** shares, in
         
         end_reached = (actual_size >= expected_file_size_in_bytes);
     }
+    
+    small_shares[0] = NULL;
+    small_shares[1] = NULL;
     delete[] small_shares;
+
+    delete[] big_shares[0];
+    delete[] big_shares[1];
+    delete[] big_shares;
 
     return reconstructed_secret;
 }

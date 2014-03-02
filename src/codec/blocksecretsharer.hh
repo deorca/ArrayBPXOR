@@ -24,7 +24,7 @@ private:
     static const int B = 4;
     static const int N = 9;
 #endif
-    static const int R = 4;
+    static const int R = 3;
     
     ICodeMatrix * _array_bp_xor_matrix;
     unsigned char _key[B];
@@ -36,11 +36,11 @@ public:
     BlockSecretSharer(unsigned char key[]);
     ~BlockSecretSharer();
     
-	unsigned char * Key();
+    unsigned char * Key();
     static const int KeyLength();
     
-	map<int, vector<unsigned char> > CreateShares(unsigned char * secret, int length, int max_number_of_shares);
-	unsigned char * ReconstructSecret(unsigned char ** shares, int num_shares, int share_size, int expected_file_size_in_bytes);
+    map<int, vector<unsigned char> > CreateShares(unsigned char * secret, int length, int max_number_of_shares);
+    unsigned char * ReconstructSecret(map<int, vector<unsigned char> > shares, int share_size, int expected_file_size_in_bytes);
 };
 
 

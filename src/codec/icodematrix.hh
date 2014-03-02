@@ -26,6 +26,8 @@ class ICodeMatrix
 
 public:
 
+	virtual ~ICodeMatrix() {};
+  
 	virtual int Rows() = 0;
 	virtual int Columns() = 0;
 	virtual int ColumnsRequired() = 0;
@@ -33,7 +35,7 @@ public:
 	virtual void Initialise(unsigned char key[]) = 0;
 
 	virtual unsigned char ** CreateShares(unsigned char * secret) = 0;
-	virtual unsigned char * ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices) = 0;
+	virtual unsigned char * ReconstructSecret(unsigned char ** shares, int indices[], int number_of_indices, int share_size) = 0;
 };
 
 #endif // ICODEMATRIX_H
