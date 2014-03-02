@@ -252,11 +252,12 @@ bool reconstruct_file_from_shares(string file_path, string output_message)
 
 	map<int, vector<unsigned char> > shares;
 	unsigned char * buffer;
-	int length = 0;
+	int length;
 
 	// Get at least 2 shared files from local directory
 	for (int i = 1; i <= 4; i++)
 	{
+	    length = 0;
 	    string share_name = create_share_name(file_path, i);
 	    buffer = get_file_contents(share_name, &length);
 
