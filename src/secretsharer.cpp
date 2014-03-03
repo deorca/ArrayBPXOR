@@ -24,6 +24,11 @@
 #include "boost/filesystem.hpp"
 #include "blocksecretsharer.hh"
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+
 using namespace std;
 
 // Prints help-message
@@ -50,7 +55,11 @@ int get_current_path(char * current_path, int length);
 // Creates a share-name based upon the input filename
 string create_share_name(string filename, int share_index);
 
-const string _key_file_name = ".key";
+struct passwd *pw = getpwuid(getuid());
+const string homedir = pw->pw_dir;
+const string _key_file_name = "/.ssk";
+const string _key_file_path = homedir + _key_file_name;
+
 const int _max_message_length = 100;
 
 
@@ -182,11 +191,11 @@ void create_key()
     unsigned char * buffer;
     int length = BlockSecretSharer::KeyLength();
 
-    BlockSecretSharer * secretSharer = new BlockSecretSharer();
+    ISecretSharer * secretSharer = new BlockSecretSharer();
 
     buffer = secretSharer->Key();
 
-    put_file_contents(_key_file_name, buffer, length);
+    put_file_contents(_key_file_path, buffer, length);
 
     delete secretSharer;
 }
@@ -209,7 +218,7 @@ bool create_file_shares(string file_path, string output_message)
 	// Get key and set up sharer
 	BlockSecretSharer * sharer = NULL;
 	int read_size = 0;
-	unsigned char * key = get_file_contents(_key_file_name, &read_size);
+	unsigned char * key = get_file_contents(_key_file_path, &read_size);
 	if (read_size > 0)
 	{
 	    sharer = new BlockSecretSharer(key);
@@ -244,7 +253,7 @@ bool reconstruct_file_from_shares(string file_path, string output_message)
     // Look for locally-stored key
     BlockSecretSharer * sharer = NULL;
     int read_size = 0;
-    unsigned char * key = get_file_contents(_key_file_name, &read_size);
+    unsigned char * key = get_file_contents(_key_file_path, &read_size);
     if (read_size > 0)
     {
 	sharer = new BlockSecretSharer(key);	// Key found, use for this operation
@@ -300,11 +309,6 @@ bool reconstruct_file_from_shares(string file_path, string output_message)
 // Gets contents of a file, based upon file-path, returns length of buffer
 unsigned char * get_file_contents(string file_path, int * read_size)
 {
-    /*
-    cout << "\nget_file_contents() called\n\n";
-    
-    return (0);
-    */
     
     streampos size;
     char * memblock;
@@ -320,7 +324,7 @@ unsigned char * get_file_contents(string file_path, int * read_size)
         
         *read_size = size;
     }
-    else cout << "Unable to open file '" << file_path << "'";
+    else cout << "\n\nUnable to open file '" << file_path << "'\n\n";
     
     return (unsigned char *)memblock;
 }
@@ -339,7 +343,7 @@ void put_file_contents(string file_path, unsigned char * contents, int length)
         file.write(memblock, length);
         file.close();
     }
-    else cout << "Unable to open file '" << file_path << "'";
+    else cout << "\n\nUnable to open file '" << file_path << "'\n\n";
 }
 
 // Gets current path of the running exe

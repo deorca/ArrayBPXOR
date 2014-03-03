@@ -20,7 +20,6 @@
 
 RestrictedBNMatrix::RestrictedBNMatrix() : _b(DEFAULT_B), _n(DEFAULT_N)
 {
-    cout << "RestrictedBNMatrix::RestrictedBNMatrix() called.\n";
     
     _key = new unsigned char[_b]();
     _full_input_values = new unsigned char[2 * _b]();
@@ -30,7 +29,6 @@ RestrictedBNMatrix::RestrictedBNMatrix() : _b(DEFAULT_B), _n(DEFAULT_N)
 
 RestrictedBNMatrix::RestrictedBNMatrix(int b, int n) : _b(b), _n(n)
 {
-    cout << "RestrictedBNMatrix::RestrictedBNMatrix(int b, int n) called.\n";
     
     _key = new unsigned char[_b]();
     _full_input_values = new unsigned char[2 * _b]();
@@ -39,8 +37,6 @@ RestrictedBNMatrix::RestrictedBNMatrix(int b, int n) : _b(b), _n(n)
 }
 RestrictedBNMatrix::~RestrictedBNMatrix()
 {
-    cout << "RestrictedBNMatrix::~RestrictedBNMatrix() called.\n";
-
     delete[] _key;
     delete[] _full_input_values;
     for (int j = 0; j <= REQUIRED_COLUMNS; j++)

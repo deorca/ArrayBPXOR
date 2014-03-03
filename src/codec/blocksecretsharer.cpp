@@ -18,7 +18,6 @@ using namespace std;
 
 BlockSecretSharer::BlockSecretSharer()
 {
-    cout << "BlockSecretSharer::BlockSecretSharer() called.\n";
     unsigned char key[B];
 
     usleep(543123);
@@ -32,12 +31,10 @@ BlockSecretSharer::BlockSecretSharer()
 
 BlockSecretSharer::BlockSecretSharer(unsigned char * key)
 {
-    cout << "BlockSecretSharer::BlockSecretSharer(unsigned char *) called.\n";
     Initialise(key);
 }
 BlockSecretSharer::~BlockSecretSharer()
 {
-    cout << "BlockSecretSharer::~BlockSecretSharer() called.\n";
     delete _array_bp_xor_matrix;
 }
 

@@ -19,6 +19,8 @@ class ISecretSharer
     
 public:
     
+	virtual ~ISecretSharer() {};
+	
 	virtual unsigned char * Key() = 0;
     
 	virtual map<int, vector<unsigned char> > CreateShares(unsigned char * secret, int length, int max_number_of_shares) = 0;
