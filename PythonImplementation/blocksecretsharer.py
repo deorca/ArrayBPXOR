@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Defines BlockSecretSharer class"""
 
 from restrictedbnmatrix import RestrictedBNMatrix

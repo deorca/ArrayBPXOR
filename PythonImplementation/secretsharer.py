@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 """A command-line tool for sharing file-data into obscured shares"""
 
 from blocksecretsharer import BlockSecretSharer

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 from restrictedbnmatrix import RestrictedBNMatrix
 from random import seed

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Defines class RestrictedBNMatrix"""
 
 from random import seed

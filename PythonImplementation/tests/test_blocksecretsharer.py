@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 from blocksecretsharer import BlockSecretSharer
 from random import seed
