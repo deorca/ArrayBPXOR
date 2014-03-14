@@ -311,7 +311,7 @@ unsigned char * get_file_contents(string file_path, int * read_size)
 {
     
     streampos size;
-    char * memblock;
+    char * memblock = NULL;
     
     ifstream file (file_path.c_str(), ios::in|ios::ate|ios::binary); // Set position to end of file
     if (file.is_open())

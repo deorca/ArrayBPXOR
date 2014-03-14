@@ -1,7 +1,8 @@
 #--------------------------------------------------------------------------
 CC=g++
 CFLAGS=-Wall
-INCLUDES=-I./headers/codec
+INCLUDES=-I./headers/codec -I/opt/local/include
+LIBDIR=-L/opt/local/lib
 LDFLAGS=-lboost_system -lboost_filesystem
 TEST1=./src/test/testcases_bnmatrix.cpp
 TEST2=./src/test/testcases_sharer.cpp
@@ -21,7 +22,7 @@ tests: cleanest $(TEST1EXE) $(TEST2EXE)
 
 
 $(EXE): $(MAIN) $(LIB1) $(LIB2)
-	$(CC) $(CFLAGS) $(INCLUDES) $? -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LIBDIR) $? -o $@ $(LDFLAGS)
 
 $(TEST1EXE): $(TEST1) $(LIB1) $(LIB2)
 	$(CC) $(CFLAGS) $? -o $@
