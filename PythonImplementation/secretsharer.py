@@ -9,7 +9,14 @@ import io
 
 
 KEY_FILE_NAME = "~/.ssk"
-
+TEST_FILE_NAME = "./testfile.txt"
+TEST_FILE_TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing elit," + \
+    "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut " + \
+    "enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi " + \
+    "ut aliquip ex ea commodo consequat. Duis aute irure dolor in " + \
+    "reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " + \
+    "pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " + \
+    "culpa qui officia deserunt mollit anim id est laborum"
 
 def print_help(unknown_command, command=None):
     """Prints the help-screen, listing all valid arguments."""
@@ -22,6 +29,8 @@ def print_help(unknown_command, command=None):
     print "  secretsharer -k                 : create new key. Keys will be"
     print "                                  : - stored at"
     print "                                  :    ", KEY_FILE_NAME
+    print "  secretsharer -t                 : creates a test-file with "
+    print "                                  : - standard filler-text"
     print "  secretsharer -c <file-path>     : creates shares from the file"
     print "                                  : - identified by <file-path>"
     print "  secretsharer -r <file-path>     : reconstructs a file from shares"
@@ -44,6 +53,12 @@ def create_key():
     put_file_contents(os.path.expanduser(KEY_FILE_NAME), key)
 
     del sharer
+
+
+def create_test_file():
+    """Creates a test-file with standard 'lorem ipsum' filler text."""
+
+    put_file_contents(os.path.abspath(TEST_FILE_NAME), TEST_FILE_TEXT)
 
 
 def get_key():
@@ -215,6 +230,9 @@ def main_function(argv):
 
         elif argv[1] == "-k":
             create_key()
+
+        elif argv[1] == "-t":
+            create_test_file()
 
         else:
             print_help(True, argv[1])
